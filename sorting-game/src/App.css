@@ -4,4 +4,13 @@
   align-items: center;
   min-height: 100vh;
   padding: 20px;
+  /* soft pastel gradient background */
+  background: linear-gradient(135deg, #f3f8ff 0%, #f7fff0 100%);
+}
+
+/* Make sure the app content doesn't stretch too wide */
+.App-inner {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 16px;
 }

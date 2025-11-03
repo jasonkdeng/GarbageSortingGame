@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './GarbageSortingGame.css';
 
 const GarbageSortingGame = () => {
   // Game items with their correct bins
@@ -30,6 +31,7 @@ const GarbageSortingGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(75);
   const [highScore, setHighScore] = useState(0);
+  const [activeBin, setActiveBin] = useState(null);
 
   // Initialize or load game
   useEffect(() => {
@@ -93,6 +95,31 @@ const GarbageSortingGame = () => {
     setFeedback('');
   };
 
+  // Keyboard shortcuts: 1 -> green, 2 -> blue, 3 -> garbage
+  useEffect(() => {
+    if (!gameStarted || gameOver) return;
+
+    const onKeyDown = (e) => {
+      // Support top-row digits and numpad
+      if (e.key === '1' || e.code === 'Numpad1') {
+        setActiveBin('green');
+        handleBinSelection('green');
+        setTimeout(() => setActiveBin(null), 140);
+      } else if (e.key === '2' || e.code === 'Numpad2') {
+        setActiveBin('blue');
+        handleBinSelection('blue');
+        setTimeout(() => setActiveBin(null), 140);
+      } else if (e.key === '3' || e.code === 'Numpad3') {
+        setActiveBin('garbage');
+        handleBinSelection('garbage');
+        setTimeout(() => setActiveBin(null), 140);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [gameStarted, gameOver, currentItem, score, round]);
+
   // End game
   const endGame = () => {
     setGameOver(true);
@@ -104,81 +131,67 @@ const GarbageSortingGame = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-lg min-h-full">
+    <div className="game-card">
       {!gameStarted ? (
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">Garbage Sorting Game</h1>
-          <p className="mb-4">Sort the garbage items into the correct bins:</p>
-          <ul className="mb-6 text-left">
-            <li className="mb-2"><span className="font-bold text-green-600">Green Bin:</span> Compostable items (food scraps, plant matter)</li>
-            <li className="mb-2"><span className="font-bold text-blue-600">Blue Box:</span> Recyclable items (paper, plastic, metal, glass)</li>
-            <li className="mb-2"><span className="font-bold text-gray-600">Garbage:</span> Non-recyclable, non-compostable waste</li>
+        <div className="start-screen">
+          <h1 className="title">Garbage Sorting Game</h1>
+          <p className="lead">Sort the garbage items into the correct bins:</p>
+          <ul className="rules">
+            <li><strong className="label green">Green Bin:</strong> Compostable items (food scraps, plant matter)</li>
+            <li><strong className="label blue">Blue Box:</strong> Recyclable items (paper, plastic, metal, glass)</li>
+            <li><strong className="label gray">Garbage:</strong> Non-recyclable, non-compostable waste</li>
           </ul>
-          <p className="mb-6">You have 60 seconds. Each correct answer gives you 10 points!</p>
-          <button 
-            onClick={startGame} 
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Start Game
-          </button>
+          <p className="muted">You have 60 seconds. Each correct answer gives you 10 points!</p>
+          <button onClick={startGame} className="btn primary">Start Game</button>
         </div>
       ) : (
-        <div className="flex flex-col items-center w-full max-w-lg">
-          <div className="flex justify-between w-full mb-4">
-            <div className="text-lg font-bold">Score: {score}</div>
-            <div className="text-lg font-bold">Time: {timeLeft}s</div>
+        <div className="game-area">
+          <div className="stats">
+            <div className="score">Score: <span className="score-value">{score}</span></div>
+            <div className="time">Time: <span className="time-value">{timeLeft}s</span></div>
           </div>
-          
+
           {gameOver ? (
-            <div className="text-center">
-              <p className="text-xl mb-4">Game Over!</p>
-              <p className="text-2xl font-bold mb-4">Your Score: {score}</p>
-              <p className="mb-4">High Score: {highScore}</p>
-              <button 
-                onClick={startGame} 
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Play Again
-              </button>
+            <div className="end-screen">
+              <p className="game-over">Game Over!</p>
+              <p className="big-score">Your Score: <span>{score}</span></p>
+              <p className="muted">High Score: {highScore}</p>
+              <button onClick={startGame} className="btn primary">Play Again</button>
             </div>
           ) : (
             <>
-              {currentItem && (
-                <div className="text-center mb-8">
-                  <div className="text-6xl mb-2">{currentItem.image}</div>
-                  <p className="text-xl font-bold">{currentItem.name}</p>
+              <div className="interaction-area">
+                {currentItem && (
+                  <div className="item-card">
+                    <div className="item-emoji" aria-hidden>{currentItem.image}</div>
+                    <p className="item-name">{currentItem.name}</p>
+                  </div>
+                )}
+
+                <div className="bins">
+                  <button onClick={() => handleBinSelection('green')} className={`bin-btn green ${activeBin === 'green' ? 'pressed' : ''}`}>
+                    <span className="key-badge">1</span>
+                    <span className="bin-emoji">♻️</span>
+                    <span>Green Bin</span>
+                  </button>
+                  <button onClick={() => handleBinSelection('blue')} className={`bin-btn blue ${activeBin === 'blue' ? 'pressed' : ''}`}>
+                    <span className="key-badge">2</span>
+                    <span className="bin-emoji">♻️</span>
+                    <span>Blue Box</span>
+                  </button>
+                  <button onClick={() => handleBinSelection('garbage')} className={`bin-btn gray ${activeBin === 'garbage' ? 'pressed' : ''}`}>
+                    <span className="key-badge">3</span>
+                    <span className="bin-emoji">🗑️</span>
+                    <span>Garbage</span>
+                  </button>
                 </div>
-              )}
-              
-              <div className="flex justify-between w-full space-x-2 mb-6">
-                <button
-                  onClick={() => handleBinSelection('green')}
-                  className="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-2 rounded flex flex-col items-center"
-                >
-                  <span className="text-xl mb-1">♻️</span>
-                  <span>Green Bin</span>
-                </button>
-                <button
-                  onClick={() => handleBinSelection('blue')}
-                  className="flex-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-2 rounded flex flex-col items-center"
-                >
-                  <span className="text-xl mb-1">♻️</span>
-                  <span>Blue Box</span>
-                </button>
-                <button
-                  onClick={() => handleBinSelection('garbage')}
-                  className="flex-1 bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-2 rounded flex flex-col items-center"
-                >
-                  <span className="text-xl mb-1">🗑️</span>
-                  <span>Garbage</span>
-                </button>
+
+                <div className="feedback-wrap">
+                  <div className="feedback" style={{ color: feedbackColor }}>
+                    {feedback}
+                  </div>
+                </div>
               </div>
-              
-              {feedback && (
-                <div className="mt-4 text-xl font-bold" style={{ color: feedbackColor }}>
-                  {feedback}
-                </div>
-              )}
             </>
           )}
         </div>
